@@ -472,7 +472,7 @@ under construction
 
         fkey = self._get_face_key(fkey)
 
-        self.halfface[fkey] = {}
+        self.halfface[fkey] = vertices
 
         for i in range(-2, len(vertices) - 2):
             u = vertices[i]
@@ -482,9 +482,6 @@ under construction
             self.add_vertex(vkey=u)
             self.add_vertex(vkey=v)
             self.add_vertex(vkey=w)
-
-            self.halfface[fkey][u] = v
-            self.halfface[fkey][v] = w
 
             if v not in self.plane[u]:
                 self.plane[u][v] = {}
@@ -496,11 +493,13 @@ under construction
             if u not in self.plane[w][v]:
                 self.plane[w][v][u] = None
 
+            # support for edges should be virtual
             if v not in self.edge[u] and u not in self.edge[v]:
                 self.edge[u][v] = {}
             if w not in self.edge[v] and v not in self.edge[w]:
                 self.edge[v][w] = {}
 
+        # support for edges should be vertical
         u = vertices[-1]
         v = vertices[0]
 
@@ -516,11 +515,17 @@ under construction
 
         for vertices in halffaces:
             fkey = self.add_halfface(vertices)
-            for u in self.halfface[fkey]:
-                v = self.halfface[fkey][u]
-                w = self.halfface[fkey][v]
+
+            vertices = self.halfface[fkey]
+
+            for i in range(-2, len(vertices) - 2):
+                u = vertices[i]
+                v = vertices[i + 1]
+                w = vertices[i + 2]
+
                 if u not in self.cell[ckey]:
                     self.cell[ckey][u] = {}
+
                 self.cell[ckey][u][v] = fkey
                 self.plane[u][v][w] = ckey
 
@@ -579,8 +584,6 @@ under construction
                 else:
                     yield u, v
 
-    # this should return "uique" halfface keys
-    # uniqueness is determined based on string comparison of sorted vertex lists
     def faces(self):
         # faces = []
         # seen = set()
@@ -614,29 +617,18 @@ under construction
     # --------------------------------------------------------------------------
 
     def halfface_cell(self, fkey):
-        u = self.halfface[fkey].iterkeys().next()
-        v = self.halfface[fkey][u]
-        w = self.halfface[fkey][v]
+        u, v, w = self.halfface[fkey][0:3]
         return self.plane[u][v][w]
 
-    def halfface_vertices(self, fkey, ordered=True):
-        if not ordered:
-            return self.halfface[fkey].keys()
-        u = self.halfface[fkey].iterkeys().next()
-        vertices = [u]
-        while True:
-            u = self.halfface[fkey][u]
-            if u == vertices[0]:
-                break
-            vertices.append(u)
-        return vertices
+    def halfface_vertices(self, fkey):
+        return self.halfface[fkey]
 
     def halfface_edges(self, fkey):
-        vertices = self.halfface_vertices(fkey, ordered=True)
-        edges = []
+        vertices = self.halfface_vertices(fkey)
         for i in range(-1, len(vertices) - 1):
-            edges.append((vertices[i], vertices[i + 1]))
-        return edges
+            u = vertices[i]
+            v = vertices[i + 1]
+            yield u, v
 
     def halfface_adjacency(self, ckey):
         raise NotImplementedError
@@ -663,9 +655,7 @@ under construction
     def cell_neighbours(self, ckey):
         nbrs = []
         for fkey in self.cell_halffaces(ckey):
-            u   = self.halfface[fkey].iterkeys().next()
-            v   = self.halfface[fkey][u]
-            w   = self.halfface[fkey][v]
+            u, v, w = self.halfface[fkey][0:3]
             nbr = self.plane[w][v][u]
             if nbr is not None:
                 nbrs.append(nbr)
@@ -675,16 +665,17 @@ under construction
         raise NotImplementedError
 
     def cell_halffaces(self, ckey):
-        halffaces = set()
+        halffaces = []
         for u in self.cell[ckey]:
             for v in self.cell[ckey][u]:
                 fkey = self.cell[ckey][u][v]
-                halffaces.add(fkey)
-        return list(halffaces)
+                halffaces.append(fkey)
+        return halffaces
 
     def cell_vertices(self, ckey):
         return list(set([key for fkey in self.cell_halffaces(ckey) for key in self.halfface_vertices(fkey)]))
 
+    # support for edges should be virtual
     def cell_edges(self, ckey):
         halfedges = []
         for fkey in self.cell_halffaces(ckey):
@@ -695,9 +686,9 @@ under construction
     def cell_vertices_and_halffaces(self, ckey):
         vkeys = self.cell_vertices(ckey)
         fkeys = self.cell_halffaces(ckey)
-        vkey_vindex = dict((vkey, index) for index, vkey in enumerate(vkeys))
+        vkey_vindex = {vkey: index for index, vkey in enumerate(vkeys)}
         vertices = [self.vertex_coordinates(vkey) for vkey in vkeys]
-        halffaces = [[vkey_vindex[vkey] for vkey in self.halfface_vertices(fkey, ordered=True)] for fkey in fkeys]
+        halffaces = [[vkey_vindex[vkey] for vkey in self.halfface_vertices(fkey)] for fkey in fkeys]
         return vertices, halffaces
 
     def cell_adjacency(self):
@@ -730,7 +721,7 @@ under construction
     # --------------------------------------------------------------------------
 
     def face_coordinates(self, fkey, axes='xyz'):
-        vertices = self.halfface_vertices(fkey, ordered=True)
+        vertices = self.halfface_vertices(fkey)
         return [self.vertex_coordinates(key, axes=axes) for key in vertices]
 
     # --------------------------------------------------------------------------
