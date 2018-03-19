@@ -7,6 +7,7 @@ import compas_rhino
 from compas_rhino.helpers.artists.mixins import VertexArtist
 from compas_rhino.helpers.artists.mixins import EdgeArtist
 from compas_rhino.helpers.artists.mixins import FaceArtist
+from compas_rhino.helpers.artists.mixins import CellArtist
 
 try:
     import rhinoscriptsyntax as rs
@@ -25,7 +26,7 @@ __email__     = 'vanmelet@ethz.ch'
 __all__ = ['VolMeshArtist']
 
 
-class VolMeshArtist(FaceArtist, EdgeArtist, VertexArtist, ArtistInterface):
+class VolMeshArtist(CellArtist, FaceArtist, EdgeArtist, VertexArtist, ArtistInterface):
     """"""
 
     def __init__(self, volmesh, layer=None):
@@ -35,6 +36,7 @@ class VolMeshArtist(FaceArtist, EdgeArtist, VertexArtist, ArtistInterface):
             'color.vertex' : (255, 0, 0),
             'color.face'   : (255, 255, 255),
             'color.edge'   : (0, 0, 0),
+            'color.cell'   : (255, 255, 255),
         }
 
     def redraw(self, timeout=None):

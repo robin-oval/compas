@@ -11,6 +11,7 @@ __all__ = [
     'VertexHelpers',
     'EdgeHelpers',
     'FaceHelpers',
+    'CellHelpers',
 ]
 
 
@@ -199,6 +200,70 @@ class FaceHelpers(object):
 
         """
         return '{0}.face.label.{1}'.format(self.name, fkey)
+
+
+class CellHelpers(object):
+
+    def get_any_cell(self):
+        """Get the identifier of a random cell.
+
+        Returns
+        -------
+        hashable
+            The identifier of the cell.
+
+        """
+        return next(iter(self.cells()))
+
+    def get_any_cell_vertex(self, ckey):
+        """Get the identifier of a random vertex of a specific cell.
+
+        Parameters
+        ----------
+        ckey : hashable
+            The identifier of the cell.
+
+        Returns
+        -------
+        hashable
+            The identifier of the vertex.
+
+        """
+        return self.cell_vertices(ckey)[0]
+
+    def cell_name(self, ckey):
+        """Get the name of a cell.
+
+        Parameters
+        ----------
+        ckey : hashable
+            The identifier of the cell.
+
+        Returns
+        -------
+        str
+            The name of the cell in the following format ``<name>.cell.<key>``,
+            with *name* the name of the datastructure.
+
+        """
+        return '{0}.cell.{1}'.format(self.name, ckey)
+
+    def cell_label_name(self, ckey):
+        """Get the name of a cell label.
+
+        Parameters
+        ----------
+        ckey : hashable
+            The identifier of the cell.
+
+        Returns
+        -------
+        str
+            The name of the label in the following format ``<name>.cell.label.<key>``,
+            with *name* the name of the datastructure.
+
+        """
+        return '{0}.cell.label.{1}'.format(self.name, ckey)
 
 
 # ==============================================================================

@@ -24,6 +24,8 @@ from compas.datastructures._mixins import EdgeGeometry
 from compas.datastructures._mixins import FaceAttributesManagement
 from compas.datastructures._mixins import FaceHelpers
 
+from compas.datastructures._mixins import CellHelpers
+
 from compas.datastructures._mixins import FromToData
 from compas.datastructures._mixins import FromToJson
 
@@ -53,6 +55,7 @@ def center_of_mass(edges, sqrt=sqrt):
 
 class VolMesh(FromToData,
               FromToJson,
+              CellHelpers,
               FaceHelpers,
               EdgeHelpers,
               VertexHelpers,
@@ -128,6 +131,7 @@ class VolMesh(FromToData,
             'color.vertex'        : (255, 255, 255),
             'color.edge'          : (0, 0, 0),
             'color.face'          : (200, 200, 200),
+            'color.cell'          : (255, 255, 255),
             'color.normal:vertex' : (0, 255, 0),
             'color.normal:face'   : (0, 255, 0),
         }
@@ -615,7 +619,7 @@ under construction
         w = self.halfface[fkey][v]
         return self.plane[u][v][w]
 
-    def halfface_vertices(self, fkey, ordered=False):
+    def halfface_vertices(self, fkey, ordered=True):
         if not ordered:
             return self.halfface[fkey].keys()
         u = self.halfface[fkey].iterkeys().next()
@@ -636,6 +640,21 @@ under construction
 
     def halfface_adjacency(self, ckey):
         raise NotImplementedError
+
+    def halfface_halfedges(self, fkey):
+        vertices = self.halfface_vertices(fkey)
+        for i in range(-1, len(vertices) - 1):
+            u = vertices[i]
+            v = vertices[i + 1]
+            yield u, v
+
+    def halfface_planes(self, fkey):
+        vertices = self.halfface_vertices(fkey)
+        for i in range(-2, len(vertices) - 2):
+            u = vertices[i]
+            v = vertices[i + 1]
+            w = vertices[i + 2]
+            yield u, v, w
 
     # --------------------------------------------------------------------------
     # cell topology
